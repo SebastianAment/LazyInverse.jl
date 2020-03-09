@@ -1,0 +1,7 @@
+name = "LazyInverse"
+uuid = "d0afe1cb-6484-4949-b9e9-61bc645ed6c7"
+authors = ["sebastianament "]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
