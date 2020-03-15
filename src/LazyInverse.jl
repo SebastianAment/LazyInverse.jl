@@ -111,23 +111,29 @@ LinearAlgebra.adjoint(P::PseudoInverse) = Adjoint(P)
 import LinearAlgebra: *, /, \
 *(L::AbstractInverse, B::AbstractVector) = L.parent \ B
 *(L::AbstractInverse, B::AbstractMatrix) = L.parent \ B
+*(L::AbstractInverse, B::Factorization) = L.parent \ B
 
 # since left pseudoinverse behaves differently for right multiplication
 *(B::AbstractVector, P::PseudoInverse) = B * Matrix(P) #(A = L.parent; (B * inverse(A'A)) * A')
 *(B::AbstractMatrix, P::PseudoInverse) = B * Matrix(P) #(A = L.parent; (B * inverse(A'A)) * A')
+*(B::Factorization, P::PseudoInverse) = B * Matrix(P)
 
 *(B::AbstractVector, L::Inverse) = B / L.parent
 *(B::AbstractMatrix, L::Inverse) = B / L.parent
+*(B::Factorization, L::Inverse) = B / L.parent
 
 \(L::AbstractInverse, B::AbstractVector) = L.parent * B
 \(L::AbstractInverse, B::AbstractMatrix) = L.parent * B
+\(L::AbstractInverse, B::Factorization) = L.parent * B
 
 /(B::AbstractVector, L::AbstractInverse) = B * L.parent
 /(B::AbstractMatrix, L::AbstractInverse) = B * L.parent
+/(B::Factorization, L::AbstractInverse) = B * L.parent
 
 # Adjoints of pseudo-inverses
 *(B::AbstractVector, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 *(B::AbstractMatrix, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
+*(B::Factorization, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 
 # Iterative method to compute pseudo inverse:
 # https://en.wikipedia.org/wiki/Moore–Penrose_inverse#Updating_the_pseudoinverse
