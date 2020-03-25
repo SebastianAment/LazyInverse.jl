@@ -1,6 +1,9 @@
 module LazyInverse
 using LinearAlgebra
 const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
+
+# TODO: export inverse, pinverse, pseudoinverse?
+
 ############################ Lazy Inverse Matrix ###############################
 # converts multiplication into a backsolve
 # this makes it very easy to express x' A^{-1} y
@@ -29,10 +32,14 @@ inverse(x::Union{Number, Diagonal, UniformScaling}) = inv(x)
 inverse(A::AbstractMatOrFac) = Inverse(A)
 
 # factorize the underlying matrix
-import LinearAlgebra: factorize, det, logdet, dot
+import LinearAlgebra: factorize, det, logdet, logabsdet, dot
 factorize(Inv::Inverse) = inverse(factorize(Inv.parent))
 det(Inv::Inverse) = 1/det(Inv.parent)
 logdet(Inv::Inverse) = -logdet(Inv.parent)
+function logabsdet(Inv::Inverse)
+    l, s = logabsdet(Inv.parent)
+    (-l, s)
+end
 dot(x::AbstractVecOrMat, A::Inverse, y::AbstractVecOrMat) = dot(x, A*y)
 
 # TODO: allows for stochastic approximation:
@@ -103,6 +110,8 @@ function pseudoinverse(A::AbstractMatOrFac, side::Union{Val{:L}, Val{:R}} = Val(
         return PseudoInverse(A')' # right pinv
     end
 end
+# pseudoinverse(A, side::Val{:R}) = pseudoinverse(A')' # cleaner but more confusing error
+
 pseudoinverse(A::Union{Number, Diagonal, UniformScaling}) = inv(A)
 pseudoinverse(P::AbstractInverse) = P.parent
 

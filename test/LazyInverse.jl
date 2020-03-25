@@ -5,8 +5,14 @@ using Test
 
 @testset "inverse" begin
     A = randn(3, 3)
+    A = A'A
     Inv = inverse(A)
     @test A*Inv ≈ I(3)
+
+    # determinant
+    @test det(Inv) ≈ 1/det(A)
+    @test logdet(Inv) ≈ -logdet(A)
+    @test all(logabsdet(Inv) .≈ (-1, 1) .* logabsdet(A))
 end
 
 @testset "pseudoinverse" begin
