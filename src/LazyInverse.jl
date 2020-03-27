@@ -1,20 +1,17 @@
 module LazyInverse
 using LinearAlgebra
 const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
-
 # TODO: export inverse, pinverse, pseudoinverse?
-
-############################ Lazy Inverse Matrix ###############################
-# converts multiplication into a backsolve
-# this makes it very easy to express x' A^{-1} y
-# as dot(x, LazyInverse(A), y), without having to form the inverse!
-# efficient if A is a Factorization, or a matrix type with non-cubic solves
-# e.g. upper-triangular
-# TODO: if we don't create different types for Matrix and Factorization,
-# it will suffer from the same type inconsistency as Adjoint in LinearAlgebra
-# change to Factorization?
+# TODO: extend Zygote's logdet adjoint with a lazy inverse ...
 # TODO: create custom printing, so that it doesn't fail in the repl
-# TODO: could extend Zygote's logdet adjoint with a lazy inverse ...
+
+# converts multiplication into a backsolve and vice versa
+# applications:
+# - WoodburyIdentity
+# -  x' A^{-1} y = *(x, Inverse(A), y) can be 2x for cholesky
+# - Zygote logdet adjoint
+# - Laplace's approximation
+############################ Lazy Inverse Matrix ###############################
 struct Inverse{T, M} <: Factorization{T} # <: AbstractMatrix{T} ?
     parent::M
     function Inverse(A::M) where {T, M<:AbstractMatOrFac{T}}
@@ -30,10 +27,14 @@ inverse(Inv::Inverse) = Inv.parent
 LinearAlgebra.inv(Inv::Inverse) = inverse(Inv)
 inverse(x::Union{Number, Diagonal, UniformScaling}) = inv(x)
 inverse(A::AbstractMatOrFac) = Inverse(A)
+Base.AbstractMatrix(Inv::Inverse) = AbstractMatrix(inv(Inv.parent))
+Base.Matrix(Inv::Inverse) = Matrix(inv(Inv.parent))
 
 # factorize the underlying matrix
 import LinearAlgebra: factorize, det, logdet, logabsdet, dot
-factorize(Inv::Inverse) = inverse(factorize(Inv.parent))
+# factorize is used to compute a type which makes it easy to apply the inverse
+# therefore, it should be a no-op on Inverse
+factorize(Inv::Inverse) = A
 det(Inv::Inverse) = 1/det(Inv.parent)
 logdet(Inv::Inverse) = -logdet(Inv.parent)
 function logabsdet(Inv::Inverse)
@@ -92,7 +93,7 @@ function Base.Matrix(P::PseudoInverse)
 end
 # Base.Matrix(P::PseudoInverse) = AbstractMatrix(P)
 Base.Matrix(A::Adjoint{<:Number, <:PseudoInverse}) = Matrix(A.parent)'
-LinearAlgebra.factorize(P::PseudoInverse) = pseudoinverse(factorize(P.parent))
+LinearAlgebra.factorize(P::PseudoInverse) = P # same reasoning as for Inverse
 
 # smart constructor
 # TODO: have to figure out how to make right inverse work correctly
@@ -144,6 +145,16 @@ import LinearAlgebra: *, /, \
 *(B::AbstractMatrix, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 *(B::Factorization, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 
+end # LazyInverse
+
+# import Base: +, -
+# +(A::AbstractInverse, B::AbstractMatrix) = AbstractMatrix(A) + B
+# +(A::AbstractMatrix, B::AbstractInverse) = A + AbstractMatrix(B)
+# -(A::AbstractInverse, B::AbstractMatrix) = AbstractMatrix(A) - B
+# -(A::AbstractMatrix, B::AbstractInverse) = A - AbstractMatrix(B)
+# +(A::AbstractInverse, B::AbstractInverse) = AbstractMatrix(A) + AbstractMatrix(B)
+# -(A::AbstractInverse, B::AbstractInverse) = AbstractMatrix(A) - AbstractMatrix(B)
+
 # Iterative method to compute pseudo inverse:
 # https://en.wikipedia.org/wiki/Moore–Penrose_inverse#Updating_the_pseudoinverse
 # function iterativepinv(A)
@@ -153,5 +164,3 @@ import LinearAlgebra: *, /, \
 #     end
 #     return B
 # end
-
-end # LazyInverse
