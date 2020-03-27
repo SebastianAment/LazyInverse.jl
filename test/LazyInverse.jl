@@ -27,4 +27,32 @@ end
     @test A*Matrix(RInv) ≈ I(2)
 end
 
+@testset "cholesky" begin
+    n = 1024
+    x = randn(n)
+    y = randn(n)
+    A = randn(n, n)
+    A = A'A
+    C = cholesky(A)
+    D = Inverse(C)
+
+    @test dot(x, D, x) ≈ dot(x, C\x)
+    @test dot(x, D, y) ≈ dot(x, C\y)
+
+    # @time dot(x, D, x)
+    # @time dot(x, C\x)
+    # @time dot(x, D, y)
+    # @time dot(x, C\y)
+    
+    # X = randn(n, n)
+    # Y = randn(n, n)
+    # @test *(X, D, X) ≈ *(X, C\X)
+    # @test *(X, D, Y) ≈ *(X, C\Y)
+
+    # @time *(X, D, X)
+    # @time *(X, C\X)
+    # @time *(X, D, Y)
+    # @time *(X, C\Y)
+end
+
 end # TestInverse

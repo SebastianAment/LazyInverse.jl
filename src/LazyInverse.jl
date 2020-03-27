@@ -41,7 +41,6 @@ function logabsdet(Inv::Inverse)
     l, s = logabsdet(Inv.parent)
     (-l, s)
 end
-dot(x::AbstractVecOrMat, A::Inverse, y::AbstractVecOrMat) = dot(x, A*y)
 
 # TODO: allows for stochastic approximation:
 # A Probing Method for Cοmputing the Diagonal of the Matrix Inverse
@@ -144,6 +143,34 @@ import LinearAlgebra: *, /, \
 *(B::AbstractVector, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 *(B::AbstractMatrix, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 *(B::Factorization, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
+
+############################ ternary dot products ##############################
+dot(x::AbstractVecOrMat, A::Inverse, y::AbstractVecOrMat) = dot(x, A*y)
+
+function dot(x::AbstractVector, A::Inverse{<:Any, <:Cholesky}, y::AbstractVector)
+	if x ≡ y
+		L = A.parent.U' # since getting L causes allocations
+		Ly = L\y
+		dot(Ly, Ly)
+	else # if x != y, this is more efficient because it avoid a temporary
+		C = A.parent
+		dot(x, C\y)
+	end
+end
+
+# TODO: could have non-allocating mul! for this
+# advantage seems to be less pronounced than for dot
+# function *(x, A::Inverse{<:Any, <:Cholesky}, y)
+# 	# println("hi")
+# 	if x ≡ y'
+# 		L = A.parent.U'
+# 		Ly = L\y
+# 		*(Ly', Ly)
+# 	else
+# 		C = A.parent
+# 		*(x, C\y)
+# 	end
+# end
 
 end # LazyInverse
 
