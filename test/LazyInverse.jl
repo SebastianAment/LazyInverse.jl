@@ -13,6 +13,9 @@ using Test
     @test det(Inv) ≈ 1/det(A)
     @test logdet(Inv) ≈ -logdet(A)
     @test all(logabsdet(Inv) .≈ (-1, 1) .* logabsdet(A))
+
+    # factorize
+    @test factorize(Inv) ≡ Inv # no-op
 end
 
 @testset "pseudoinverse" begin
@@ -25,6 +28,9 @@ end
     RInv = pseudoinverse(A, Val(:R))
     @test A*RInv ≈ I(2)
     @test A*Matrix(RInv) ≈ I(2)
+
+    # factorize
+    @test factorize(LInv) ≡ LInv
 end
 
 @testset "cholesky" begin
@@ -43,7 +49,7 @@ end
     # @time dot(x, C\x)
     # @time dot(x, D, y)
     # @time dot(x, C\y)
-    
+
     # X = randn(n, n)
     # Y = randn(n, n)
     # @test *(X, D, X) ≈ *(X, C\X)

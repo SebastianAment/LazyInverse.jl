@@ -34,7 +34,7 @@ Base.Matrix(Inv::Inverse) = Matrix(inv(Inv.parent))
 import LinearAlgebra: factorize, det, logdet, logabsdet, dot
 # factorize is used to compute a type which makes it easy to apply the inverse
 # therefore, it should be a no-op on Inverse
-factorize(Inv::Inverse) = A
+factorize(Inv::Inverse) = Inv
 det(Inv::Inverse) = 1/det(Inv.parent)
 logdet(Inv::Inverse) = -logdet(Inv.parent)
 function logabsdet(Inv::Inverse)
