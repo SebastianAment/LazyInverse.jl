@@ -41,6 +41,7 @@ function logabsdet(Inv::Inverse)
     l, s = logabsdet(Inv.parent)
     (-l, s)
 end
+LinearAlgebra.isposdef(A::Inverse) = isposdef(A.parent)
 
 # TODO: allows for stochastic approximation:
 # A Probing Method for Cοmputing the Diagonal of the Matrix Inverse

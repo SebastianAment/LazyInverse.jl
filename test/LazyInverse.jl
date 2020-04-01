@@ -16,6 +16,7 @@ using Test
 
     # factorize
     @test factorize(Inv) ≡ Inv # no-op
+    @test isposdef(Inv)
 end
 
 @testset "pseudoinverse" begin
