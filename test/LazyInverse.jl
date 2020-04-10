@@ -4,10 +4,11 @@ using LazyInverse: inverse, Inverse, pseudoinverse, PseudoInverse
 using Test
 
 @testset "inverse" begin
-    A = randn(3, 3)
+    n = 3
+    A = randn(n, n)
     A = A'A
     Inv = inverse(A)
-    @test A*Inv ≈ I(3)
+    @test A*Inv ≈ I(n)
 
     # determinant
     @test det(Inv) ≈ 1/det(A)
@@ -17,6 +18,18 @@ using Test
     # factorize
     @test factorize(Inv) ≡ Inv # no-op
     @test isposdef(Inv)
+
+    # inv
+    @test inv(Inv) isa AbstractMatrix
+    @test inv(Inv) ≈ A
+    D = Diagonal(randn(n))
+    @test inv(inverse(D)) isa AbstractMatrix
+    @test inv(inverse(D)) ≈ D
+    @test inv(Inverse(Inv)) isa AbstractMatrix
+    @test inv(Inverse(Inv)) ≈ inv(A)
+
+    @test AbstractMatrix(Inv) ≈ inv(A)
+    @test AbstractMatrix(inverse(D)) isa Diagonal
 end
 
 @testset "pseudoinverse" begin

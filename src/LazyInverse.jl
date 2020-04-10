@@ -1,9 +1,13 @@
 module LazyInverse
 using LinearAlgebra
 const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
-# TODO: export inverse, pinverse, pseudoinverse?
 # TODO: extend Zygote's logdet adjoint with a lazy inverse ...
 # TODO: create custom printing, so that it doesn't fail in the repl
+export inverse, pinverse, pseudoinverse
+export Inverse, PseudoInverse
+
+# TODO: should be in LinearAlgebraExtensions
+Base.AbstractMatrix(A::AbstractMatrix) = A
 
 # converts multiplication into a backsolve and vice versa
 # applications:
@@ -11,6 +15,7 @@ const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
 # -  x' A^{-1} y = *(x, Inverse(A), y) can be 2x for cholesky
 # - Zygote logdet adjoint
 # - Laplace's approximation
+# - solves with kronecker products
 ############################ Lazy Inverse Matrix ###############################
 struct Inverse{T, M} <: Factorization{T} # <: AbstractMatrix{T} ?
     parent::M
@@ -24,10 +29,12 @@ Base.size(L::Inverse, dim::Integer) = size(L.parent, dim)
 # Base.show(io::IO, Inv::Inverse) = (println(io, "Inverse of "); show(io, Inv.parent))
 function inverse end # smart pseudo-constructor
 inverse(Inv::Inverse) = Inv.parent
-LinearAlgebra.inv(Inv::Inverse) = inverse(Inv)
+LinearAlgebra.inv(Inv::Inverse) = Inv.parent
+LinearAlgebra.inv(Inv::Inverse{<:Any, <:Factorization}) = AbstractMatrix(Inv.parent) # since inv is expected to return Matrix
+
 inverse(x::Union{Number, Diagonal, UniformScaling}) = inv(x)
 inverse(A::AbstractMatOrFac) = Inverse(A)
-Base.AbstractMatrix(Inv::Inverse) = AbstractMatrix(inv(Inv.parent))
+Base.AbstractMatrix(Inv::Inverse) = inv(Inv.parent)
 Base.Matrix(Inv::Inverse) = Matrix(inv(Inv.parent))
 
 # factorize the underlying matrix
@@ -49,10 +56,7 @@ import LinearAlgebra: diag
 diag(Inv::Inverse) = diag(Matrix(Inv))
 diag(Inv::Inverse{<:Any, <:Factorization}) = diag(inv(Inv.parent))
 
-# TODO: specialize
-# mul!(Y, A, B, α, β)
-# ldiv!
-# rdiv!
+################################################################################
 import LinearAlgebra: adjoint, transpose, ishermitian, issymmetric
 adjoint(Inv::Inverse) = Inverse(adjoint(Inv.parent))
 tranpose(Inv::Inverse) = Inverse(tranpose(Inv.parent))
@@ -76,6 +80,7 @@ LowerTriangular(L::Inverse{T, <:LowerTriangular}) where {T} = L
 # *(B::AbstractVector, C::Chol) = (B * C.L) * C.U
 # *(B::AbstractMatrix, C::Chol) = (B * C.L) * C.U
 
+################################################################################
 # this implements the right pseudoinverse
 # is defined if A has linearly independent columns
 # ⁻¹, ⁺ syntax
@@ -145,6 +150,29 @@ import LinearAlgebra: *, /, \
 *(B::AbstractMatrix, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 *(B::Factorization, L::Adjoint{<:Real, <:PseudoInverse}) = (L'*B')'
 
+##################### in-place multiplication and solving ######################
+# TODO: tests, mul!, and div! methods involving scalar
+import LinearAlgebra: ldiv!, rdiv!, mul!
+ldiv!(Y, A::Inverse, B) = mul!(Y, A.parent, B, 1, 0) # is this a problem?
+mul!(Y, A::Inverse, B) = ldiv!(Y, A.parent, B) # 5 arg?
+function mul!(Y, A, B::Inverse) # 5 arg?
+	copy!(Y, A)
+	rdiv!(Y, B.parent)
+end
+
+# A \ b in place, overwriting B
+lmul!(A::Inverse, B) = ldiv!(A.parent, B) # these are usuall only defined for numbers
+rmul!(A, B::Inverse) = rdiv!(A, B.parent)
+
+# function ldiv!(A::Inverse, B)
+# 	Y = pre-allocate Y # needed for correctness
+# 	mul!(Y, A.parent, B)
+# end
+# function rdiv!(A, B::Inverse)
+# 	Y = pre-allocate Y
+# 	mul!(Y, A, B.parent)
+# end
+
 ############################ ternary dot products ##############################
 dot(x::AbstractVecOrMat, A::Inverse, y::AbstractVecOrMat) = dot(x, A*y)
 
@@ -159,6 +187,8 @@ function dot(x::AbstractVector, A::Inverse{<:Any, <:Cholesky}, y::AbstractVector
 	end
 end
 
+end # LazyInverse
+
 # TODO: could have non-allocating mul! for this
 # advantage seems to be less pronounced than for dot
 # function *(x, A::Inverse{<:Any, <:Cholesky}, y)
@@ -172,8 +202,6 @@ end
 # 		*(x, C\y)
 # 	end
 # end
-
-end # LazyInverse
 
 # import Base: +, -
 # +(A::AbstractInverse, B::AbstractMatrix) = AbstractMatrix(A) + B
