@@ -23,13 +23,13 @@ using Test
     @test inv(Inv) isa AbstractMatrix
     @test inv(Inv) ≈ A
     D = Diagonal(randn(n))
-    @test inv(inverse(D)) isa AbstractMatrix
-    @test inv(inverse(D)) ≈ D
+    @test inv(Inverse(D)) isa AbstractMatrix
+    @test inv(Inverse(D)) ≈ D
     @test inv(Inverse(Inv)) isa AbstractMatrix
     @test inv(Inverse(Inv)) ≈ inv(A)
 
     @test AbstractMatrix(Inv) ≈ inv(A)
-    @test AbstractMatrix(inverse(D)) isa Diagonal
+    @test AbstractMatrix(Inverse(D)) isa Diagonal
 end
 
 @testset "pseudoinverse" begin

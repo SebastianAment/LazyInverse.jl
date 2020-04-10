@@ -7,7 +7,8 @@ export inverse, pinverse, pseudoinverse
 export Inverse, PseudoInverse
 
 # TODO: should be in LinearAlgebraExtensions
-Base.AbstractMatrix(A::AbstractMatrix) = A
+# Base.AbstractMatrix(A::AbstractMatrix) = A
+# using LinearAlgebraExtensions
 
 # converts multiplication into a backsolve and vice versa
 # applications:
