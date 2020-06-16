@@ -154,16 +154,16 @@ import LinearAlgebra: *, /, \
 ##################### in-place multiplication and solving ######################
 # TODO: tests, mul!, and div! methods involving scalar
 import LinearAlgebra: ldiv!, rdiv!, mul!
-ldiv!(Y, A::Inverse, B) = mul!(Y, A.parent, B, 1, 0) # is this a problem?
-mul!(Y, A::Inverse, B) = ldiv!(Y, A.parent, B) # 5 arg?
-function mul!(Y, A, B::Inverse) # 5 arg?
+ldiv!(Y, A::AbstractInverse, B) = mul!(Y, A.parent, B, 1, 0) # is this a problem?
+mul!(Y, A::AbstractInverse, B) = ldiv!(Y, A.parent, B) # 5 arg?
+function mul!(Y, A, B::AbstractInverse) # 5 arg?
 	copy!(Y, A)
 	rdiv!(Y, B.parent)
 end
 
 # A \ b in place, overwriting B
-lmul!(A::Inverse, B) = ldiv!(A.parent, B) # these are usuall only defined for numbers
-rmul!(A, B::Inverse) = rdiv!(A, B.parent)
+lmul!(A::AbstractInverse, B) = ldiv!(A.parent, B) # these are usuall only defined for numbers
+rmul!(A, B::AbstractInverse) = rdiv!(A, B.parent)
 
 # function ldiv!(A::Inverse, B)
 # 	Y = pre-allocate Y # needed for correctness
