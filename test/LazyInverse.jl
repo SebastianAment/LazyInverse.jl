@@ -30,6 +30,7 @@ using Test
 
     @test AbstractMatrix(Inv) ≈ inv(A)
     @test AbstractMatrix(Inverse(D)) isa Diagonal
+    @test Matrix(Inverse(D)) isa Matrix
 end
 
 @testset "pseudoinverse" begin

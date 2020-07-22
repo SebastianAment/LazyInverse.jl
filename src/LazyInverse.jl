@@ -6,10 +6,6 @@ const AbstractMatOrFac{T} = Union{AbstractMatrix{T}, Factorization{T}}
 export inverse, pinverse, pseudoinverse
 export Inverse, PseudoInverse
 
-# TODO: should be in LinearAlgebraExtensions
-# Base.AbstractMatrix(A::AbstractMatrix) = A
-# using LinearAlgebraExtensions
-
 # converts multiplication into a backsolve and vice versa
 # applications:
 # - WoodburyIdentity
@@ -32,10 +28,16 @@ function inverse end # smart pseudo-constructor
 inverse(Inv::Inverse) = Inv.parent
 LinearAlgebra.inv(Inv::Inverse) = Inv.parent
 LinearAlgebra.inv(Inv::Inverse{<:Any, <:Factorization}) = AbstractMatrix(Inv.parent) # since inv is expected to return Matrix
+Base.deepcopy(A::Inverse) = inverse(copy(A.parent))
+Base.copy(A::Inverse) = deepcopy(A)
 
 inverse(x::Union{Number, Diagonal, UniformScaling}) = inv(x)
 inverse(A::AbstractMatOrFac) = Inverse(A)
-Base.AbstractMatrix(Inv::Inverse) = inv(Inv.parent)
+
+function Base.AbstractMatrix(Inv::Inverse)
+	A = inv(Inv.parent)
+	return A isa Factorization ? AbstractMatrix(A) : A
+end
 Base.Matrix(Inv::Inverse) = Matrix(inv(Inv.parent))
 
 # factorize the underlying matrix
@@ -88,7 +90,7 @@ LowerTriangular(L::Inverse{T, <:LowerTriangular}) where {T} = L
 struct PseudoInverse{T, M<:AbstractMatOrFac{T}} <: Factorization{T}
     parent::M
 end
-const AbstractInverse{T} = Union{Inverse{T}, PseudoInverse{T}}
+const AbstractInverse{T, M} = Union{Inverse{T, M}, PseudoInverse{T, M}}
 
 Base.size(P::PseudoInverse) = size(P.parent')
 Base.size(P::PseudoInverse, k::Integer) = size(P.parent', k::Integer)
