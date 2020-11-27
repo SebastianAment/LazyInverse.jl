@@ -32,7 +32,8 @@ Base.deepcopy(A::Inverse) = inverse(copy(A.parent))
 Base.copy(A::Inverse) = deepcopy(A)
 
 inverse(x::Union{Number, Diagonal, UniformScaling}) = inv(x)
-inverse(A::AbstractMatOrFac) = Inverse(A)
+inverse(A::AbstractMatrix) = all(==(1), size(A)) ? inv(A[1]) : Inverse(A)
+inverse(A::Factorization) = Inverse(A)
 
 function Base.AbstractMatrix(Inv::Inverse)
 	A = inv(Inv.parent)

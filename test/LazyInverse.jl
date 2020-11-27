@@ -31,6 +31,10 @@ using Test
     @test AbstractMatrix(Inv) ≈ inv(A)
     @test AbstractMatrix(Inverse(D)) isa Diagonal
     @test Matrix(Inverse(D)) isa Matrix
+
+    x = randn((1, 1))
+    @test inverse(x) isa Real
+    @test inverse(x) ≈ inv(x)[1]
 end
 
 @testset "pseudoinverse" begin
